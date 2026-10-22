@@ -1,0 +1,38 @@
+---
+title: "Getting Started with organoR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with organoR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Load and validate data
+
+```{r, eval=FALSE}
+library(organoR)
+org <- read_org_data("complex_org.csv")
+validate_org_data(org)
+```
+
+Rows represent management relationships, so one employee can have multiple managers. IDs are generated during graph construction.
+
+## Build and inspect
+
+```{r, eval=FALSE}
+graph_parts <- build_graph(org)
+health <- get_team_subgraph(org, "Health")
+```
+
+## Render and export
+
+```{r, eval=FALSE}
+render_team_org(org, "Health")
+render_all_teams(org, "all-organograms.html")
+```
+
+The exported HTML is self-contained and contains one section per team.

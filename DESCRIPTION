@@ -1,0 +1,35 @@
+Package: organoR
+Title: Organisational Organograms from Tidy Data
+Version: 0.1.0
+Authors@R: person("Iris", "Oren", role = c("aut", "cre"), email = "iris.oren@example.org")
+Description: Validates tidy organisational relationship data and creates
+    grade-ranked, team-specific organograms using igraph, GraphViz and
+    DiagrammeR. Cross-team and recursively linked managers are included.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: R (>= 4.2.0)
+Imports:
+    cli,
+    DiagrammeR,
+    dplyr,
+    htmltools,
+    htmlwidgets,
+    igraph,
+    purrr,
+    readr,
+    rlang,
+    sgplot,
+    stringr,
+    tibble
+Suggests:
+    covr,
+    knitr,
+    pkgdown,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/example/organoR
+BugReports: https://github.com/example/organoR/issues

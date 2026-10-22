@@ -1,0 +1,15 @@
+name,grade,profession,team,manager,manager_type
+Chief Analyst,C3,OR,Corporate,,line
+Health Head,C2,OR,Health,Chief Analyst,line
+Justice Head,C2,Economist,Justice,Chief Analyst,line
+Education Head,C2,OR,Education,Chief Analyst,line
+Health Lead,C1,Statistician,Health,Health Head,line
+Health Analyst,B3,OR,Health,Health Lead,line
+Health Analyst,B3,OR,Health,Justice Head,dotted
+Health Officer,B2,Social Researcher,Health,Health Lead,line
+Justice Lead,C1,OR,Justice,Justice Head,line
+Justice Analyst,B3,Economist,Justice,Justice Lead,line
+Education Lead,C1,OR,Education,Education Head,line
+Education Analyst,B3,OR,Education,Education Lead,line
+Vacancy,B2,OR,Health,Health Lead,line
+Vacancy,B3,Statistician,Justice,Justice Lead,line

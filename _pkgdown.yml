@@ -1,0 +1,13 @@
+url: https://example.github.io/organoR/
+template:
+  bootstrap: 5
+reference:
+- title: Import and validation
+  contents: [read_org_data, validate_org_data]
+- title: Graphs and rendering
+  contents: [build_graph, get_team_subgraph, render_team_org, render_all_teams]
+- title: Styling
+  contents: [theme_scotgov]
+articles:
+- title: Getting started
+  contents: [getting-started]

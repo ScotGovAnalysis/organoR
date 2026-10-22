@@ -1,0 +1,5 @@
+name,grade,profession,team,manager,manager_type
+Director,C3,OR,Health,,line
+Lead,C2,OR,Health,Director,line
+Vacancy,C1,OR,Health,Lead,line
+Vacancy,B3,Statistician,Health,Lead,dotted
