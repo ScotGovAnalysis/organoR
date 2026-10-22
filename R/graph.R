@@ -20,7 +20,9 @@ build_graph <- function(data) {
     dplyr::mutate(vacancy_id = sprintf("vacancy_%04d", dplyr::row_number()), employee_id = NA_character_, node_id = .data$vacancy_id) |>
     dplyr::select(.data$name, .data$grade, .data$profession, .data$team, .data$employee_id, .data$vacancy_id, .data$node_id, .data$.row)
   nodes <- dplyr::bind_rows(people |> dplyr::mutate(.row = NA_integer_), vacancies) |>
-    dplyr::mutate(is_vacancy = .data$name == "Vacancy", is_or = .data$profession == "OR")
+    dplyr::mutate(
+      is_vacancy = .data$name == "Vacancy"
+    )
   name_ids <- people |> dplyr::select(.data$name, manager_id = .data$node_id)
   employee_ids <- people |> dplyr::select(.data$name, employee_node_id = .data$node_id)
   edges <- data |> dplyr::filter(!is.na(.data$manager)) |>
