@@ -31,5 +31,5 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/example/organoR
-BugReports: https://github.com/example/organoR/issues
+URL: https://github.com/ScotGovAnalysis/organoR
+BugReports: https://github.com/ScotGovAnalysis/organoRissues
