@@ -444,10 +444,7 @@ devtools::check()
 
 # Adding package datasets to organoR
 
-Copy these files into the package root, preserving their paths:
-
-- `data-raw/create-package-data.R`
-- `R/data.R`
+Add data metadata to `R/data.R`
 
 From the package root, run:
 
