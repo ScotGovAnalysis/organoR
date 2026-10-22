@@ -343,23 +343,3 @@ render_all_teams(
 )
 ```
 
-# Package development
-
-After modifying exported functions or Roxygen comments, regenerate the
-documentation:
-
-```{r development-document, eval=FALSE}
-devtools::document()
-```
-
-Run the tests with:
-
-```{r development-test, eval=FALSE}
-devtools::test()
-```
-
-Run a complete package check with:
-
-```{r development-check, eval=FALSE}
-devtools::check()
-```
