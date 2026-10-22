@@ -418,8 +418,11 @@ organogram_css <- function() {
 
 #' Render one team organogram
 #'
+#' Creates an interactive organogram for a selected team. Managers from other
+#' teams are included when they are required to connect the hierarchy.
+#'
 #' @param data Organisational relationship data.
-#' @param team Team to render.
+#' @param team A single team name.
 #' @param theme Theme returned by [theme_scotgov()].
 #' @param shaded_profession Either `NULL` or a single profession name. Nodes
 #'   belonging to this profession receive a solid grade-coloured fill. If
@@ -427,8 +430,27 @@ organogram_css <- function() {
 #' @param show_legend Logical. If `TRUE`, display the colour legend above the
 #'   organogram.
 #'
-#' @return A DiagrammeR htmlwidget or browsable HTML component.
+#' @return A DiagrammeR htmlwidget when `show_legend` is `FALSE`; otherwise, a
+#'   browsable HTML component containing the legend and organogram.
+#'
 #' @export
+#'
+#' @examples
+#' path <- system.file(
+#'   "extdata",
+#'   "complex_org.csv",
+#'   package = "organoR"
+#' )
+#'
+#' if (nzchar(path)) {
+#'   org <- read_org_data(path)
+#'
+#'   render_team_org(
+#'     data = org,
+#'     team = "Health",
+#'     shaded_profession = "OR"
+#'   )
+#' }
 render_team_org <- function(
     data,
     team,
@@ -584,15 +606,36 @@ render_team_org <- function(
 
 #' Render all team organograms to HTML
 #'
+#' Creates an HTML page containing one organogram for every team. A single
+#' colour legend is displayed above the collection of graphs.
+#'
 #' @param data Organisational relationship data.
-#' @param output_file Destination HTML path.
+#' @param output_file Path to the destination HTML file.
 #' @param theme Theme returned by [theme_scotgov()].
 #' @param shaded_profession Either `NULL` or a single profession name. Nodes
 #'   belonging to this profession receive a solid grade-coloured fill. If
 #'   `NULL`, all occupied position nodes have a white fill.
 #'
-#' @return `output_file`, invisibly.
+#' @return The normalised output path, invisibly.
+#'
 #' @export
+#'
+#' @examples
+#' path <- system.file(
+#'   "extdata",
+#'   "complex_org.csv",
+#'   package = "organoR"
+#' )
+#'
+#' if (nzchar(path) && interactive()) {
+#'   org <- read_org_data(path)
+#'
+#'   render_all_teams(
+#'     data = org,
+#'     output_file = tempfile(fileext = ".html"),
+#'     shaded_profession = "OR"
+#'   )
+#' }
 render_all_teams <- function(
     data,
     output_file,

@@ -19,7 +19,6 @@ Imports:
     igraph,
     purrr,
     readr,
-    rlang,
     sgplot,
     stringr,
     tibble
