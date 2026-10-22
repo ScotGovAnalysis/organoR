@@ -44,11 +44,10 @@ build_graph <- function(data) {
 #' x <- read_org_data(system.file("extdata", "matrix_org.csv", package = "organoR"))
 #' if (nrow(x)) get_team_subgraph(x, "Health")
 get_team_subgraph <- function(data, team) {
+  #need to declare team to a separate variable as the filter call was not working with team == team
   team_current = team
   built <- build_graph(data)
-  browser()
   seeds <- built$nodes |> dplyr::filter(.data$team == team_current) |> dplyr::pull(node_id)
-  browser()
   if (!length(seeds)) abort_org(paste0("Unknown team: ", team))
   ancestors <- unique(unlist(igraph::ego(built$graph, order = Inf, nodes = seeds, mode = "in")))
   ids <- igraph::V(built$graph)$name[ancestors]
