@@ -31,13 +31,16 @@ make_dot <- function(parts, theme) {
 #' @param data Organisational relationship data.
 #' @param team Team to render.
 #' @param theme Theme returned by [theme_scotgov()].
+#' @param show_legend Logical. If `TRUE`, display the colour legend above the
+#'   organogram.
 #'
 #' @return A DiagrammeR htmlwidget.
 #' @export
 render_team_org <- function(
     data,
     team,
-    theme = theme_scotgov()
+    theme = theme_scotgov(), 
+    show_legend = TRUE
 ) {
   parts <- get_team_subgraph(
     data = data,
@@ -178,6 +181,21 @@ render_team_org <- function(
   
   attr(widget, "dot") <- dot
   
+  if (!isTRUE(show_legend)) {
+    return(widget)
+  }
+  
+  htmltools::browsable(
+    htmltools::tagList(
+      organogram_css(),
+      make_colour_legend(theme),
+      htmltools::tags$div(
+        class = "organogram-container",
+        widget
+      )
+    )
+  )
+  
   widget
 }
 
@@ -234,7 +252,8 @@ render_all_teams <- function(
           render_team_org(
             data = data,
             team = team,
-            theme = theme
+            theme = theme, 
+            show_legend = FALSE
           )
         )
       )
@@ -244,54 +263,31 @@ render_all_teams <- function(
   page <- htmltools::tags$html(
     htmltools::tags$head(
       htmltools::tags$meta(charset = "utf-8"),
-      htmltools::tags$title(
-        "organoR organograms"
-      ),
+      htmltools::tags$title("organoR organograms"),
+      organogram_css(),
       htmltools::tags$style(
         "
       body {
         font-family: Arial, sans-serif;
         margin: 2rem;
       }
-    
+
       h1,
       h2 {
         color: #005EB8;
+        text-align: center;
       }
-    
+
       h2 {
         margin-top: 3rem;
-      }
-    
-      .organogram-container {
-        width: 100%;
-        overflow-x: auto;
-        overflow-y: visible;
-        padding: 1rem 0;
-    
-        /*
-         * Centre the widget when it is narrower than the plotting panel.
-         */
-        display: flex;
-        justify-content: center;
-      }
-    
-      .organogram-container .html-widget {
-        display: block !important;
-        flex: 0 0 auto;
-        max-width: none !important;
-        min-width: 0 !important;
-      }
-    
-      .organogram-container svg {
-        display: block !important;
-        max-width: none !important;
       }
       "
       )
     ),
+    
     htmltools::tags$body(
       htmltools::tags$h1("Organograms"),
+      make_colour_legend(theme),
       widgets
     )
   )
@@ -313,4 +309,219 @@ render_all_teams <- function(
   )
   
   invisible(output_file)
+}
+
+make_colour_legend <- function(theme) {
+  grade_order <- rev(.grade_order)
+  
+  grade_items <- purrr::map(
+    grade_order,
+    function(grade) {
+      htmltools::tags$div(
+        class = "organogram-legend-item",
+        
+        htmltools::tags$span(
+          class = "organogram-legend-swatch",
+          style = htmltools::css(
+            background_color = theme$colours[[grade]],
+            border_color = theme$colours[[grade]]
+          ),
+          `aria-hidden` = "true"
+        ),
+        
+        htmltools::tags$span(
+          class = "organogram-legend-label",
+          grade
+        )
+      )
+    }
+  )
+  
+  node_type_items <- list(
+    htmltools::tags$div(
+      class = "organogram-legend-item",
+      
+      htmltools::tags$span(
+        class = "organogram-legend-swatch",
+        style = htmltools::css(
+          background_color = theme$colours[["C2"]],
+          border_color = theme$colours[["C2"]]
+        ),
+        `aria-hidden` = "true"
+      ),
+      
+      htmltools::tags$span(
+        class = "organogram-legend-label",
+        "OR"
+      )
+    ),
+    
+    htmltools::tags$div(
+      class = "organogram-legend-item",
+      
+      htmltools::tags$span(
+        class = "organogram-legend-swatch",
+        style = htmltools::css(
+          background_color = "#FFFFFF",
+          border_color = theme$colours[["C2"]]
+        ),
+        `aria-hidden` = "true"
+      ),
+      
+      htmltools::tags$span(
+        class = "organogram-legend-label",
+        "Non-OR"
+      )
+    ),
+    
+    htmltools::tags$div(
+      class = "organogram-legend-item",
+      
+      htmltools::tags$span(
+        class = paste(
+          "organogram-legend-swatch",
+          "organogram-legend-swatch-vacancy"
+        ),
+        style = htmltools::css(
+          background_color = theme$vacancy_fill,
+          border_color = "#4D4D4D"
+        ),
+        `aria-hidden` = "true"
+      ),
+      
+      htmltools::tags$span(
+        class = "organogram-legend-label",
+        "Vacancy"
+      )
+    )
+  )
+  
+  htmltools::tags$div(
+    class = "organogram-legend",
+    role = "group",
+    `aria-label` = paste(
+      "Organogram legend showing grade colours",
+      "and node types"
+    ),
+    
+    htmltools::tags$div(
+      class = "organogram-legend-section",
+      
+      htmltools::tags$div(
+        class = "organogram-legend-title",
+        "Grade"
+      ),
+      
+      htmltools::tags$div(
+        class = "organogram-legend-items",
+        grade_items
+      )
+    ),
+    
+    htmltools::tags$div(
+      class = "organogram-legend-section",
+      
+      htmltools::tags$div(
+        class = "organogram-legend-title",
+        "Node type"
+      ),
+      
+      htmltools::tags$div(
+        class = "organogram-legend-items",
+        node_type_items
+      )
+    )
+  )
+}
+
+organogram_css <- function() {
+  htmltools::tags$style(
+    "
+      .organogram-container {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding: 1rem 0;
+        display: flex;
+        justify-content: center;
+      }
+  
+      .organogram-container .html-widget {
+        display: block !important;
+        flex: 0 0 auto;
+        max-width: none !important;
+        min-width: 0 !important;
+      }
+  
+      .organogram-container svg {
+        display: block !important;
+        max-width: none !important;
+      }
+  
+      .organogram-legend {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem 2rem;
+  
+    width: fit-content;
+    max-width: 100%;
+    margin: 1rem auto 2rem auto;
+    padding: 1rem 1.25rem;
+  
+    border: 1px solid #D9D9D9;
+    border-radius: 0.25rem;
+    background-color: #FFFFFF;
+    font-family: Arial, sans-serif;
+  }
+  
+  .organogram-legend-section {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .organogram-legend-title {
+    font-weight: 700;
+  }
+  
+  .organogram-legend-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+  
+  .organogram-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+  
+  .organogram-legend-swatch {
+    display: inline-block;
+    box-sizing: border-box;
+  
+    width: 1.25rem;
+    height: 1.25rem;
+  
+    flex: 0 0 auto;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 0.15rem;
+  }
+  
+  .organogram-legend-swatch-vacancy {
+    border-style: dashed;
+  }
+  
+  .organogram-legend-label {
+    font-size: 0.9rem;
+  }
+    "
+  )
 }
