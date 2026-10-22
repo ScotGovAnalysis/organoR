@@ -1,3 +1,4 @@
 *.html
 .Rproj.user/*
 docs
+.Rproj.user

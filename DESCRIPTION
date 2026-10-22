@@ -1,7 +1,7 @@
 Package: organoR
 Title: Organisational Organograms from Tidy Data
 Version: 0.1.0
-Authors@R: person("Iris", "Oren", role = c("aut", "cre"), email = "iris.oren@example.org")
+Authors@R: person("Iris", "Oren", role = c("aut", "cre"), email = "iris.oren@gov.scot")
 Description: Validates tidy organisational relationship data and creates
     grade-ranked, team-specific organograms using igraph, GraphViz and
     DiagrammeR. Cross-team and recursively linked managers are included.
