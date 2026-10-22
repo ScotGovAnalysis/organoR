@@ -1,6 +1,9 @@
 ---
 title: "Getting Started with organoR"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
 vignette: >
   %\VignetteIndexEntry{Getting Started with organoR}
   %\VignetteEngine{knitr::rmarkdown}
@@ -8,31 +11,355 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.align = "center"
+)
 ```
 
-## Load and validate data
+# Introduction
 
-```{r, eval=FALSE}
+`organoR` creates organisational charts from tidy management-relationship
+data.
+
+It supports line and dotted management, vacancies, cross-team managers,
+multiple managers and profession-specific shading.
+
+The main workflow is:
+
+1. read the data;
+2. validate its structure;
+3. construct the organisational graph;
+4. extract a team subgraph;
+5. render one team or all teams; and
+6. optionally shade one selected profession.
+
+```{r attach}
 library(organoR)
-org <- read_org_data("complex_org.csv")
+```
+
+# Example organisation
+
+The package contains a complex example dataset:
+
+```{r read-data}
+complex_path <- system.file(
+  "extdata",
+  "complex_org.csv",
+  package = "organoR"
+)
+
+org <- read_org_data(complex_path)
+
+org
+```
+
+The data has one row for each management relationship.
+
+The required columns are:
+
+- `name`;
+- `grade`;
+- `profession`;
+- `team`;
+- `manager`; and
+- `manager_type`.
+
+An employee with both a line manager and a dotted manager appears on multiple
+rows. Employee attributes must remain consistent across those rows.
+
+A vacancy is represented by setting `name` to `"Vacancy"`.
+
+# Validate the input
+
+Validate the data before rendering:
+
+```{r validate}
 validate_org_data(org)
 ```
 
-Rows represent management relationships, so one employee can have multiple managers. IDs are generated during graph construction.
+Validation checks for missing columns, invalid grades, invalid management
+types, inconsistent employee attributes, missing managers and cycles.
 
-## Build and inspect
+# Build the complete graph
 
-```{r, eval=FALSE}
+Construct the full organisational graph with:
+
+```{r build}
 graph_parts <- build_graph(org)
-health <- get_team_subgraph(org, "Health")
+
+graph_parts$nodes
+graph_parts$edges
 ```
 
-## Render and export
+The returned object also contains an `igraph` object:
 
-```{r, eval=FALSE}
-render_team_org(org, "Health")
-render_all_teams(org, "all-organograms.html")
+```{r inspect-igraph}
+graph_parts$graph
 ```
 
-The exported HTML is self-contained and contains one section per team.
+`build_graph()` generates deterministic employee identifiers and unique
+vacancy identifiers.
+
+# Extract one team
+
+Use `get_team_subgraph()` to extract a team and all managers required to
+connect its hierarchy:
+
+```{r team-subgraph}
+health_graph <- get_team_subgraph(
+  data = org,
+  team = "Health"
+)
+
+health_graph$nodes
+```
+
+Managers from another team are retained if they are ancestors of an employee
+in the selected team. Unrelated employees from other teams are excluded.
+
+# Render without profession shading
+
+The default is to leave all occupied positions white:
+
+```{r render-unshaded}
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = NULL
+)
+```
+
+Although occupied positions are unshaded, their borders retain the colour
+associated with their grade.
+
+Vacancies continue to use the dedicated vacancy style.
+
+# Shade a selected profession
+
+Set `shaded_profession` to a single profession name to fill that profession's
+nodes with the corresponding grade colour.
+
+For example, shade operational research positions:
+
+```{r render-or}
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR"
+)
+```
+
+Other professions remain white.
+
+The legend identifies:
+
+- grade colours;
+- the shaded profession;
+- other professions; and
+- vacancies.
+
+# Shade a different profession
+
+The package does not treat operational research as intrinsically different
+from other professions.
+
+For example, shade statistician positions with:
+
+```{r render-statistician}
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "Statistician"
+)
+```
+
+The same graph can therefore be rendered for different professional
+audiences without changing the underlying data.
+
+# Suppress the legend
+
+An individually rendered graph displays its legend by default.
+
+Suppress it with:
+
+```{r render-no-legend}
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR",
+  show_legend = FALSE
+)
+```
+
+This is useful when the graph is embedded in a document that already defines
+the visual encodings.
+
+# Render all teams
+
+Use `render_all_teams()` to create one HTML page containing every team:
+
+```{r render-all, eval=FALSE}
+render_all_teams(
+  data = org,
+  output_file = "all-organograms.html",
+  shaded_profession = "OR"
+)
+```
+
+Only one legend is shown, at the top of the page.
+
+The output consists of:
+
+```text
+all-organograms.html
+all-organograms_files/
+```
+
+The dependency directory must be retained with the HTML file.
+
+# Compare shading choices
+
+The same organisation can be rendered several ways.
+
+## All professions unshaded
+
+```{r render-all-unshaded, eval=FALSE}
+render_all_teams(
+  data = org,
+  output_file = "all-organograms-unshaded.html",
+  shaded_profession = NULL
+)
+```
+
+## Operational research shaded
+
+```{r render-all-or, eval=FALSE}
+render_all_teams(
+  data = org,
+  output_file = "all-organograms-or.html",
+  shaded_profession = "OR"
+)
+```
+
+## Economists shaded
+
+```{r render-all-economist, eval=FALSE}
+render_all_teams(
+  data = org,
+  output_file = "all-organograms-economist.html",
+  shaded_profession = "Economist"
+)
+```
+
+## Social researchers shaded
+
+```{r render-all-social-research, eval=FALSE}
+render_all_teams(
+  data = org,
+  output_file = "all-organograms-social-research.html",
+  shaded_profession = "Social Researcher"
+)
+```
+
+The setting changes only node fill and legend text. It does not alter the
+organisation, node borders, management relationships or layout.
+
+# Visual encodings
+
+The rendered graphs use the following encodings:
+
+- grade controls border colour;
+- the selected profession receives solid grade-coloured fill;
+- other occupied positions receive white fill;
+- vacancies receive the vacancy fill and a dashed border;
+- line management uses solid edges; and
+- dotted management uses dotted edges.
+
+Separating these encodings allows grade, profession, vacancy status and
+management type to be interpreted independently.
+
+# Custom colours
+
+Create a custom theme by supplying a named grade palette:
+
+```{r custom-theme}
+custom_theme <- theme_scotgov(
+  colours = c(
+    C3 = "#003B5C",
+    C2 = "#0065BD",
+    C1 = "#4A90C2",
+    B3 = "#8FB7D4",
+    B2 = "#C2D8E8",
+    B1 = "#E8F1F7"
+  )
+)
+```
+
+Use it when rendering:
+
+```{r use-custom-theme}
+render_team_org(
+  data = org,
+  team = "Health",
+  theme = custom_theme,
+  shaded_profession = "OR"
+)
+```
+
+The selected profession is filled with the custom grade colour.
+
+# Complete workflow
+
+A typical analysis script is:
+
+```{r workflow, eval=FALSE}
+library(organoR)
+
+org <- read_org_data(
+  "complex_org.csv"
+)
+
+validate_org_data(org)
+
+graph_parts <- build_graph(org)
+
+health_graph <- get_team_subgraph(
+  data = org,
+  team = "Health"
+)
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR"
+)
+
+render_all_teams(
+  data = org,
+  output_file = "all-organograms.html",
+  shaded_profession = "OR"
+)
+```
+
+# Package development
+
+After modifying exported functions or Roxygen comments, regenerate the
+documentation:
+
+```{r development-document, eval=FALSE}
+devtools::document()
+```
+
+Run the tests with:
+
+```{r development-test, eval=FALSE}
+devtools::test()
+```
+
+Run a complete package check with:
+
+```{r development-check, eval=FALSE}
+devtools::check()
+```
