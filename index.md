@@ -1,0 +1,462 @@
+# organoR
+
+`organoR` creates organisational charts from tidy
+management-relationship data.
+
+The package supports:
+
+- line and dotted management relationships;
+- employees with more than one manager;
+- team-specific organograms;
+- managers belonging to other teams;
+- recursively linked management hierarchies;
+- vacancies;
+- grade-based node colours;
+- optional solid shading for a selected profession;
+- consistent node sizing across organograms;
+- top-to-bottom organisational layouts;
+- legends describing grade colours and node styles; and
+- rendering all teams to a single HTML page.
+
+## Installation
+
+Install the package from its source directory with:
+
+``` r
+
+install.packages(
+  "path/to/organoR",
+  repos = NULL,
+  type = "source"
+)
+```
+
+During package development, use:
+
+``` r
+
+devtools::load_all()
+```
+
+## Input data
+
+The input should be in tidy format, with one row for each management
+relationship.
+
+The following columns are required:
+
+- `name`: employee name, or `"Vacancy"` for an unoccupied position;
+- `grade`: organisational grade;
+- `profession`: analytical or other profession;
+- `team`: the employee’s team;
+- `manager`: the name of the manager, or `NA` for the root position; and
+- `manager_type`: either `"line"` or `"dotted"`.
+
+For example:
+
+``` r
+
+org <- tibble::tribble(
+  ~name,             ~grade, ~profession,          ~team,      ~manager,        ~manager_type,
+  "Chief Analyst",   "C3",   "OR",                 "Corporate", NA,              "line",
+  "Health Head",     "C2",   "OR",                 "Health",    "Chief Analyst", "line",
+  "Health Lead",     "C1",   "Statistician",       "Health",    "Health Head",   "line",
+  "Health Analyst",  "B3",   "OR",                 "Health",    "Health Lead",   "line",
+  "Health Analyst",  "B3",   "OR",                 "Health",    "Chief Analyst", "dotted",
+  "Health Officer",  "B2",   "Social Researcher",  "Health",    "Health Lead",   "line",
+  "Vacancy",          "B3",   "Economist",          "Health",    "Health Lead",   "line"
+)
+```
+
+An employee with more than one manager should appear on multiple rows
+with the same `name`, `grade`, `profession` and `team`.
+
+Each employee must belong to exactly one team.
+
+## Reading and validating data
+
+Read a CSV file with:
+
+``` r
+
+library(organoR)
+
+org <- read_org_data(
+  "complex_org.csv"
+)
+```
+
+Validate it before graph construction or rendering:
+
+``` r
+
+validate_org_data(org)
+```
+
+Validation checks include:
+
+- required columns;
+- supported grade values;
+- recognised management types;
+- consistent employee metadata;
+- references to managers that exist in the data;
+- circular management relationships; and
+- managers whose grade is lower than that of the employee.
+
+Additional professions can be used. They may produce a warning if they
+are not included in the package’s initially recognised set, but they do
+not prevent rendering.
+
+## Constructing the organisational graph
+
+Use
+[`build_graph()`](https://scotgovanalysis.github.io/organoR/reference/build_graph.md)
+to construct the complete organisational network:
+
+``` r
+
+graph_parts <- build_graph(org)
+
+graph_parts$nodes
+graph_parts$edges
+graph_parts$graph
+```
+
+The result contains:
+
+- `nodes`: employee and vacancy attributes;
+- `edges`: management relationships; and
+- `graph`: a directed `igraph` object.
+
+The package generates:
+
+- a deterministic `employee_id` for each employee; and
+- a unique `vacancy_id` for every vacancy row.
+
+Unique vacancy identifiers allow more than one vacancy to have the same
+grade, profession, team and manager.
+
+## Extracting a team organogram
+
+Use
+[`get_team_subgraph()`](https://scotgovanalysis.github.io/organoR/reference/get_team_subgraph.md)
+to obtain one team’s subgraph:
+
+``` r
+
+health_graph <- get_team_subgraph(
+  data = org,
+  team = "Health"
+)
+
+health_graph$nodes
+health_graph$edges
+```
+
+The subgraph contains:
+
+- employees belonging to the selected team;
+- vacancies belonging to the selected team;
+- managers belonging to other teams; and
+- recursively linked managers required to connect the hierarchy.
+
+It does not include unrelated employees from other teams.
+
+## Rendering one team
+
+Render a single team with:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health"
+)
+```
+
+By default, all occupied nodes have a white fill.
+
+### Shading a selected profession
+
+Set `shaded_profession` to apply solid grade-coloured shading to one
+profession:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR"
+)
+```
+
+To shade statisticians instead:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "Statistician"
+)
+```
+
+To leave all occupied positions unshaded:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = NULL
+)
+```
+
+The shading parameter affects node fill only. It does not change node
+labels, border colours, management relationships or graph layout.
+
+Vacancies retain their dedicated fill and dashed outline regardless of
+the selected profession.
+
+### Controlling the legend
+
+A team rendered independently includes a legend by default:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR",
+  show_legend = TRUE
+)
+```
+
+Suppress it with:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR",
+  show_legend = FALSE
+)
+```
+
+## Rendering all teams
+
+Render every team to an HTML page with:
+
+``` r
+
+render_all_teams(
+  data = org,
+  output_file = "all-organograms.html",
+  shaded_profession = "OR"
+)
+```
+
+The output contains:
+
+- one organogram for each team;
+- a single legend at the top of the page;
+- consistent node dimensions across all graphs; and
+- centred graphs that retain their natural GraphViz dimensions.
+
+The function also creates a dependency directory:
+
+``` text
+all-organograms.html
+all-organograms_files/
+```
+
+Keep the HTML file and dependency directory together when moving or
+sharing the output.
+
+To render all professions without solid shading:
+
+``` r
+
+render_all_teams(
+  data = org,
+  output_file = "all-organograms.html",
+  shaded_profession = NULL
+)
+```
+
+## Visual encodings
+
+The organograms use separate visual properties for different
+information:
+
+- **border colour** represents grade;
+- **solid grade-coloured fill** identifies the selected shaded
+  profession;
+- **white fill** identifies other occupied positions;
+- **vacancy fill and dashed border** identify vacancies;
+- **solid edges** identify line management; and
+- **dotted edges** identify dotted management.
+
+The selected profession is therefore a rendering choice rather than a
+package-level definition of which profession is primary.
+
+## Custom themes
+
+The default theme is created with:
+
+``` r
+
+theme <- theme_scotgov()
+```
+
+Pass it explicitly when rendering:
+
+``` r
+
+render_team_org(
+  data = org,
+  team = "Health",
+  theme = theme,
+  shaded_profession = "OR"
+)
+```
+
+A custom grade palette can be supplied as a named vector:
+
+``` r
+
+custom_theme <- theme_scotgov(
+  colours = c(
+    C3 = "#003B5C",
+    C2 = "#0065BD",
+    C1 = "#4A90C2",
+    B3 = "#8FB7D4",
+    B2 = "#C2D8E8",
+    B1 = "#E8F1F7"
+  )
+)
+
+render_team_org(
+  data = org,
+  team = "Health",
+  theme = custom_theme,
+  shaded_profession = "Statistician"
+)
+```
+
+The colour vector must include every supported grade.
+
+## Example data
+
+The package includes several example datasets:
+
+``` r
+
+simple_path <- system.file(
+  "extdata",
+  "simple_org.csv",
+  package = "organoR"
+)
+
+matrix_path <- system.file(
+  "extdata",
+  "matrix_org.csv",
+  package = "organoR"
+)
+
+vacancy_path <- system.file(
+  "extdata",
+  "vacancy_org.csv",
+  package = "organoR"
+)
+
+complex_path <- system.file(
+  "extdata",
+  "complex_org.csv",
+  package = "organoR"
+)
+```
+
+Load and render the complex example with:
+
+``` r
+
+complex_org <- read_org_data(complex_path)
+
+render_all_teams(
+  data = complex_org,
+  output_file = "complex-organograms.html",
+  shaded_profession = "OR"
+)
+```
+
+## Testing
+
+Run the package test suite with:
+
+``` r
+
+devtools::test()
+```
+
+Run a full package check with:
+
+``` r
+
+devtools::check()
+```
+
+Regenerate documentation after changing Roxygen comments with:
+
+``` r
+
+devtools::document()
+```
+
+## Typical workflow
+
+``` r
+
+library(organoR)
+
+org <- read_org_data(
+  "complex_org.csv"
+)
+
+validate_org_data(org)
+
+graph_parts <- build_graph(org)
+
+health_graph <- get_team_subgraph(
+  data = org,
+  team = "Health"
+)
+
+render_team_org(
+  data = org,
+  team = "Health",
+  shaded_profession = "OR"
+)
+
+render_all_teams(
+  data = org,
+  output_file = "all-organograms.html",
+  shaded_profession = "OR"
+)
+```
+
+# Package development
+
+After modifying exported functions or Roxygen comments, regenerate the
+documentation:
+
+`{r development-document, eval=FALSE} devtools::document()`
+
+Run the tests with:
+
+`{r development-test, eval=FALSE} devtools::test()`
+
+Run a complete package check with:
+
+`{r development-check, eval=FALSE} devtools::check()`
