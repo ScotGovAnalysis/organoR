@@ -83,15 +83,13 @@ Read a CSV file with:
 ```r
 library(organoR)
 
-org <- read_org_data(
-  "complex_org.csv"
-)
+data("complex_org", package = "organoR")
 ```
 
 Validate it before graph construction or rendering:
 
 ```r
-validate_org_data(org)
+validate_org_data(complex_org)
 ```
 
 Validation checks include:
@@ -113,7 +111,7 @@ prevent rendering.
 Use `build_graph()` to construct the complete organisational network:
 
 ```r
-graph_parts <- build_graph(org)
+graph_parts <- build_graph(complex_org)
 
 graph_parts$nodes
 graph_parts$edges
@@ -140,7 +138,7 @@ Use `get_team_subgraph()` to obtain one team's subgraph:
 
 ```r
 health_graph <- get_team_subgraph(
-  data = org,
+  data = complex_org,
   team = "Health"
 )
 
@@ -163,7 +161,7 @@ Render a single team with:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health"
 )
 ```
@@ -177,7 +175,7 @@ profession:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   shaded_profession = "OR"
 )
@@ -187,7 +185,7 @@ To shade statisticians instead:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   shaded_profession = "Statistician"
 )
@@ -197,7 +195,7 @@ To leave all occupied positions unshaded:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   shaded_profession = NULL
 )
@@ -215,7 +213,7 @@ A team rendered independently includes a legend by default:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   shaded_profession = "OR",
   show_legend = TRUE
@@ -226,7 +224,7 @@ Suppress it with:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   shaded_profession = "OR",
   show_legend = FALSE
@@ -239,7 +237,7 @@ Render every team to an HTML page with:
 
 ```r
 render_all_teams(
-  data = org,
+  data = complex_org,
   output_file = "all-organograms.html",
   shaded_profession = "OR"
 )
@@ -266,7 +264,7 @@ To render all professions without solid shading:
 
 ```r
 render_all_teams(
-  data = org,
+  data = complex_org,
   output_file = "all-organograms.html",
   shaded_profession = NULL
 )
@@ -298,7 +296,7 @@ Pass it explicitly when rendering:
 
 ```r
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   theme = theme,
   shaded_profession = "OR"
@@ -320,7 +318,7 @@ custom_theme <- theme_scotgov(
 )
 
 render_team_org(
-  data = org,
+  data = complex_org,
   team = "Health",
   theme = custom_theme,
   shaded_profession = "Statistician"
@@ -443,3 +441,41 @@ Run a complete package check with:
 ```{r development-check, eval=FALSE}
 devtools::check()
 ```
+
+# Adding package datasets to organoR
+
+Copy these files into the package root, preserving their paths:
+
+- `data-raw/create-package-data.R`
+- `R/data.R`
+
+From the package root, run:
+
+```r
+source("data-raw/create-package-data.R")
+devtools::document()
+devtools::test()
+devtools::check()
+```
+
+This creates four files under `data/`:
+
+- `simple_org.rda`
+- `matrix_org.rda`
+- `vacancy_org.rda`
+- `complex_org.rda`
+
+After installing or loading the package, use:
+
+```r
+data("complex_org", package = "organoR")
+render_all_teams(
+  complex_org,
+  "all-organograms.html",
+  shaded_profession = "OR"
+)
+```
+
+The CSV files in `inst/extdata/` remain the authoritative source files. Re-run
+the data-raw script whenever one changes, and commit the generated `data/*.rda`
+files to the repository.
